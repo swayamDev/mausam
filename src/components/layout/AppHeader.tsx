@@ -2,7 +2,7 @@ import { SearchDialog } from "@/components/dialogs/SearchDialog";
 import { ThemeToggle } from "@/components/dropdowns/theme-toggle";
 import { UnitDropdown } from "@/components/dropdowns/UnitDropdown";
 
-export const Header = () => {
+export const AppHeader = () => {
   return (
     <div className="h-16 lg:my-4">
       <header className="bg-background/50 fixed top-0 left-0 z-50 flex h-16 w-full items-center justify-between gap-5 border-b px-4 backdrop-blur-lg lg:top-4 lg:right-4 lg:left-4 lg:mx-auto lg:w-auto lg:max-w-384 lg:rounded-2xl lg:border">
