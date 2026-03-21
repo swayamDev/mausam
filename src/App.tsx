@@ -1,12 +1,12 @@
-import { Button } from "./components/ui/button";
+import { ThemeProvider } from "@/components/providers/theme-provider";
+import { Header } from "./components/layout/Header";
 
-const App = () => {
+function App() {
   return (
-    <>
-      <div className="bg-blue-900 text-7xl text-amber-300">App</div>
-      <Button>Button</Button>
-    </>
+    <ThemeProvider defaultTheme="dark" storageKey="vite-ui-theme">
+      <Header />
+    </ThemeProvider>
   );
-};
+}
 
 export default App;
