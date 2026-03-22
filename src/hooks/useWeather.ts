@@ -1,12 +1,14 @@
-import { WeatherProviderContext } from "@/components/providers/WeatherProvider";
-import { useContext } from "react";
+import { useWeatherStore } from "@/store/useWeatherStore";
+import { useWeatherQuery } from "@/features/weather/useWeatherQuery";
 
 export const useWeather = () => {
-  const context = useContext(WeatherProviderContext);
+  const { lat, lon, unit } = useWeatherStore();
 
-  if (!context) {
-    throw new Error("useWeather must be used within WeatherProvider");
-  }
+  const query = useWeatherQuery(lat, lon, unit);
 
-  return context;
+  return {
+    weather: query.data,
+    isLoading: query.isLoading,
+    error: query.error,
+  };
 };

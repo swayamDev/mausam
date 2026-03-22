@@ -12,6 +12,7 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 
 import type { ChartConfig } from "@/components/ui/chart";
+import type { HourlyForecast } from "@/types";
 
 const chartConfig = {
   visibility: {
@@ -20,11 +21,11 @@ const chartConfig = {
   },
 } satisfies ChartConfig;
 
-export const VisibilityChart = () => {
+const VisibilityChart = () => {
   const { weather } = useWeather();
 
   const chartData = useMemo(() => {
-    return weather?.hourly.map((item) => ({
+    return weather?.hourly.map((item: HourlyForecast) => ({
       hour: new Date(item.dt * 1000).toLocaleTimeString("en-US", {
         hour: "numeric",
         hour12: true,
@@ -88,3 +89,5 @@ export const VisibilityChart = () => {
     </ChartContainer>
   );
 };
+
+export default VisibilityChart;

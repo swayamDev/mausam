@@ -1,6 +1,6 @@
-import { APP, WEATHER_API } from "@/config";
-
+import { APP } from "@/config";
 import { useWeather } from "@/hooks/useWeather";
+import { useUnitStore } from "@/store/useUnitStore";
 
 import {
   Card,
@@ -14,115 +14,111 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 import { Navigation2Icon } from "lucide-react";
 
-import type { WeatherUnitType } from "@/components/providers/WeatherProvider";
-
 export const CurrentWeatherCard = () => {
-  const { weather } = useWeather();
+  const { weather, isLoading, error } = useWeather();
+  const { unit } = useUnitStore();
 
-  if (!weather) return <Skeleton className="min-h-75 rounded-xl" />;
+  // 🔥 Loading State (Better UX)
+  if (isLoading) {
+    return (
+      <Card className="min-h-65 space-y-4 p-4">
+        <Skeleton className="h-5 w-32" />
+        <Skeleton className="h-10 w-20" />
+        <Skeleton className="h-20 w-full" />
+      </Card>
+    );
+  }
 
-  const currentWeather = {
-    dt: new Date(weather.current.dt * 1000).toLocaleTimeString("en-US", {
+  // ❌ Error State
+  if (error || !weather) {
+    return (
+      <Card className="text-muted-foreground flex min-h-65 items-center justify-center text-sm">
+        Failed to load weather data
+      </Card>
+    );
+  }
+
+  const current = weather.current;
+
+  const data = {
+    time: new Date(current.dt * 1000).toLocaleTimeString("en-US", {
       timeStyle: "short",
     }),
-    iconCode: weather.current.weather[0].icon,
-    temp: weather.current.temp.toFixed(),
-    description: weather.current.weather[0].description,
-    feelsLike: weather.current.feels_like.toFixed(),
-    windSpeed: weather.current.wind_speed.toFixed(),
-    windDeg: weather.current.wind_deg,
-    humidity: weather.current.humidity,
-    visibility: (weather.current.visibility / 1000).toFixed(),
-    pressure: weather.current.pressure,
-    dewPoint: weather.current.dew_point.toFixed(),
+    temp: Math.round(current.temp),
+    feelsLike: Math.round(current.feels_like),
+    windSpeed: Math.round(current.wind_speed),
+    visibility: Math.round(current.visibility / 1000),
+    dewPoint: Math.round(current.dew_point),
   };
 
-  const weatherUnit =
-    (localStorage.getItem(APP.STORE_KEY.UNIT) as WeatherUnitType) ||
-    WEATHER_API.DEFAULTS.UNIT;
-
   return (
-    <Card className="@container min-h-75">
+    <Card className="h-full">
       <CardHeader>
-        <CardTitle>Current weather</CardTitle>
-        <CardDescription>{currentWeather.dt}</CardDescription>
+        <CardTitle>Current Weather</CardTitle>
+        <CardDescription>{data.time}</CardDescription>
       </CardHeader>
 
-      <CardContent className="grow">
-        <div className="flex flex-wrap items-center gap-x-6">
-          <figure>
-            <img
-              src={`https://openweathermap.org/img/wn/${currentWeather.iconCode}@4x.png`}
-              alt={currentWeather.description}
-              width={70}
-              height={70}
-              className="object-contain"
-            />
-          </figure>
+      <CardContent>
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:gap-6">
+          {/* Icon */}
+          <img
+            src={`https://openweathermap.org/img/wn/${current.weather[0].icon}@4x.png`}
+            alt={`Weather: ${current.weather[0].description}`}
+            className="h-16 w-16 object-contain"
+          />
 
-          <p className="flex items-start text-5xl font-medium sm:text-7xl">
-            {currentWeather.temp}
-            <span className="text-3xl">{APP.UNIT.TEMP[weatherUnit]}</span>
-          </p>
+          {/* Temperature */}
+          <div className="flex items-start gap-1">
+            <span className="text-4xl font-semibold sm:text-6xl">
+              {data.temp}
+            </span>
+            <span className="text-muted-foreground text-xl">
+              {APP.UNIT.TEMP[unit]}
+            </span>
+          </div>
 
+          {/* Description */}
           <div>
-            <p className="font-medium capitalize sm:text-lg">
-              {currentWeather.description}
+            <p className="font-medium capitalize">
+              {current.weather[0].description}
             </p>
-
-            <div className="flex items-center gap-2 text-sm">
-              <span className="text-muted-foreground">Feels like</span>
-              <span>{currentWeather.feelsLike}°</span>
-            </div>
+            <p className="text-muted-foreground text-sm">
+              Feels like {data.feelsLike}°
+            </p>
           </div>
         </div>
       </CardContent>
 
-      <CardFooter className="flex-wrap gap-x-8 gap-y-2 @lg:justify-between">
-        <div>
-          <p className="text-muted-foreground text-sm">Wind</p>
+      <CardFooter className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
+        <Metric label="Wind">
           <div className="flex items-center gap-1">
-            <p>
-              {currentWeather.windSpeed} {APP.UNIT.WIND[weatherUnit]}
-            </p>
+            {data.windSpeed} {APP.UNIT.WIND[unit]}
             <Navigation2Icon
               size={14}
-              fill="currentColor"
-              style={{
-                rotate: `${currentWeather.windDeg}deg`,
-              }}
+              style={{ rotate: `${current.wind_deg}deg` }}
             />
           </div>
-        </div>
+        </Metric>
 
-        <div>
-          <p className="text-muted-foreground text-sm">Humidity</p>
-          <div className="flex items-center gap-1">
-            <p>{currentWeather.humidity}%</p>
-          </div>
-        </div>
-
-        <div>
-          <p className="text-muted-foreground text-sm">Visibility</p>
-          <div className="flex items-center gap-1">
-            <p>{currentWeather.visibility} km</p>
-          </div>
-        </div>
-
-        <div>
-          <p className="text-muted-foreground text-sm">Pressure</p>
-          <div className="flex items-center gap-1">
-            <p>{currentWeather.pressure} hPa</p>
-          </div>
-        </div>
-
-        <div>
-          <p className="text-muted-foreground text-sm">Dew point</p>
-          <div className="flex items-center gap-1">
-            <p>{currentWeather.dewPoint}°</p>
-          </div>
-        </div>
+        <Metric label="Humidity">{current.humidity}%</Metric>
+        <Metric label="Visibility">{data.visibility} km</Metric>
+        <Metric label="Pressure">{current.pressure} hPa</Metric>
+        <Metric label="Dew Point">{data.dewPoint}°</Metric>
       </CardFooter>
     </Card>
   );
 };
+
+// 🔥 Reusable Metric Component
+const Metric = ({
+  label,
+  children,
+}: {
+  label: string;
+  children: React.ReactNode;
+}) => (
+  <div>
+    <p className="text-muted-foreground text-xs">{label}</p>
+    <p className="text-sm font-medium">{children}</p>
+  </div>
+);

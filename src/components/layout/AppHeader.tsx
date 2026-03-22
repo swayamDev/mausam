@@ -1,6 +1,6 @@
 import { SearchDialog } from "@/components/dialogs/SearchDialog";
 import { ThemeToggle } from "@/components/dropdowns/theme-toggle";
-import { UnitDropdown } from "@/components/dropdowns/UnitDropdown";
+import { UnitToggle } from "../dropdowns/UnitToggle";
 
 export const AppHeader = () => {
   return (
@@ -26,7 +26,7 @@ export const AppHeader = () => {
         <div className="flex gap-2">
           <SearchDialog />
           <ThemeToggle />
-          <UnitDropdown />
+          <UnitToggle />
         </div>
       </header>
     </div>

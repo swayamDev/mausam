@@ -1,190 +1,93 @@
-import { useState } from "react";
+import { useState, lazy, Suspense } from "react";
 
 import { Tabs, TabsTrigger, TabsList, TabsContent } from "@/components/ui/tabs";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { OverviewChart } from "@/components/charts/OverviewChart";
-import { PrecipitationChart } from "@/components/charts/PrecipitationChart";
-import { WindChart } from "@/components/charts/WindChart";
-import { HumidityChart } from "@/components/charts/HumidityChart";
-import { CloudCoverChart } from "@/components/charts/CloudCoverChart";
-import { PressureChart } from "@/components/charts/PressureChart";
-import { UVIndexChart } from "@/components/charts/UVIndexChart";
-import { VisibilityChart } from "@/components/charts/VisibilityChart";
-import { FeelsLikeChart } from "@/components/charts/FeelsLikeChart";
+import { Skeleton } from "@/components/ui/skeleton";
 
-type Tab =
-  | "overview"
-  | "precipitation"
-  | "wind"
-  | "humidity"
-  | "cloudCover"
-  | "pressure"
-  | "uv"
-  | "visibility"
-  | "feelsLike";
+// 🔥 Lazy load charts (performance boost)
+const OverviewChart = lazy(() => import("@/components/charts/OverviewChart"));
+const PrecipitationChart = lazy(
+  () => import("@/components/charts/PrecipitationChart"),
+);
+const WindChart = lazy(() => import("@/components/charts/WindChart"));
+const HumidityChart = lazy(() => import("@/components/charts/HumidityChart"));
+const CloudCoverChart = lazy(
+  () => import("@/components/charts/CloudCoverChart"),
+);
+const PressureChart = lazy(() => import("@/components/charts/PressureChart"));
+const UVIndexChart = lazy(() => import("@/components/charts/UVIndexChart"));
+const VisibilityChart = lazy(
+  () => import("@/components/charts/VisibilityChart"),
+);
+const FeelsLikeChart = lazy(() => import("@/components/charts/FeelsLikeChart"));
 
-const TABS_LIST = [
-  {
-    title: "Overview",
-    value: "overview",
-  },
-  {
-    title: "Precipitation",
-    value: "precipitation",
-  },
-  {
-    title: "Wind",
-    value: "wind",
-  },
-  {
-    title: "Humidity",
-    value: "humidity",
-  },
-  {
-    title: "Cloud cover",
-    value: "cloudCover",
-  },
-  {
-    title: "Pressure",
-    value: "pressure",
-  },
-  {
-    title: "UV",
-    value: "uv",
-  },
-  {
-    title: "Visibility",
-    value: "visibility",
-  },
-  {
-    title: "Feels like",
-    value: "feelsLike",
-  },
-];
+type Tab = keyof typeof TAB_CONFIG;
+
+// 🔥 Config-driven (scalable)
+const TAB_CONFIG = {
+  overview: { title: "Overview", component: OverviewChart },
+  precipitation: { title: "Precipitation", component: PrecipitationChart },
+  wind: { title: "Wind", component: WindChart },
+  humidity: { title: "Humidity", component: HumidityChart },
+  cloudCover: { title: "Cloud Cover", component: CloudCoverChart },
+  pressure: { title: "Pressure", component: PressureChart },
+  uv: { title: "UV Index", component: UVIndexChart },
+  visibility: { title: "Visibility", component: VisibilityChart },
+  feelsLike: { title: "Feels Like", component: FeelsLikeChart },
+} as const;
 
 export const HourlyWeatherTabs = () => {
   const [tab, setTab] = useState<Tab>("overview");
+
+  const ActiveChart = TAB_CONFIG[tab].component;
 
   return (
     <Tabs
       value={tab}
       onValueChange={(value) => setTab(value as Tab)}
-      className="gap-4 py-4"
+      className="space-y-4 py-4"
     >
-      <div className="flex items-center gap-4">
-        <h2 className="text-lg font-semibold">Hourly</h2>
+      {/* Header */}
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <h2 className="text-lg font-semibold">Hourly Forecast</h2>
 
-        <TabsList
-          className="bg-background justify-start gap-2 overflow-x-auto overflow-y-hidden"
-          style={{ scrollbarWidth: "none" }}
-        >
-          {TABS_LIST.map((item) => (
-            <TabsTrigger
-              key={item.value}
-              value={item.value}
-              className="bg-secondary data-[state=active]:bg-primary! data-[state=active]:text-background h-9 rounded-full border-none px-4"
-            >
-              {item.title}
-            </TabsTrigger>
-          ))}
-        </TabsList>
+        {/* Scrollable Tabs */}
+        <div className="relative">
+          <TabsList className="scrollbar-none flex w-full gap-2 overflow-x-auto bg-transparent px-1 py-1">
+            {Object.entries(TAB_CONFIG).map(([key, item]) => (
+              <TabsTrigger
+                key={key}
+                value={key}
+                className="bg-secondary/60 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-full px-4 py-1.5 text-sm whitespace-nowrap backdrop-blur"
+              >
+                {item.title}
+              </TabsTrigger>
+            ))}
+          </TabsList>
+
+          {/* Gradient fade (UX improvement) */}
+          <div className="from-background pointer-events-none absolute top-0 right-0 h-full w-8 bg-linear-to-l to-transparent" />
+        </div>
       </div>
 
-      <TabsContent value="overview">
+      {/* Active Tab Content */}
+      <TabsContent value={tab}>
         <Card>
           <CardHeader>
-            <CardTitle>Overview</CardTitle>
+            <CardTitle>{TAB_CONFIG[tab].title}</CardTitle>
           </CardHeader>
-          <CardContent>
-            <OverviewChart />
-          </CardContent>
-        </Card>
-      </TabsContent>
 
-      <TabsContent value="precipitation">
-        <Card>
-          <CardHeader>
-            <CardTitle>Precipitation</CardTitle>
-          </CardHeader>
           <CardContent>
-            <PrecipitationChart />
-          </CardContent>
-        </Card>
-      </TabsContent>
-
-      <TabsContent value="wind">
-        <Card>
-          <CardHeader>
-            <CardTitle>Wind</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <WindChart />
-          </CardContent>
-        </Card>
-      </TabsContent>
-
-      <TabsContent value="humidity">
-        <Card>
-          <CardHeader>
-            <CardTitle>Humidity</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <HumidityChart />
-          </CardContent>
-        </Card>
-      </TabsContent>
-
-      <TabsContent value="cloudCover">
-        <Card>
-          <CardHeader>
-            <CardTitle>Cloud cover</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <CloudCoverChart />
-          </CardContent>
-        </Card>
-      </TabsContent>
-
-      <TabsContent value="pressure">
-        <Card>
-          <CardHeader>
-            <CardTitle>Pressure</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <PressureChart />
-          </CardContent>
-        </Card>
-      </TabsContent>
-
-      <TabsContent value="uv">
-        <Card>
-          <CardHeader>
-            <CardTitle>UV</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <UVIndexChart />
-          </CardContent>
-        </Card>
-      </TabsContent>
-
-      <TabsContent value="visibility">
-        <Card>
-          <CardHeader>
-            <CardTitle>Visibility</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <VisibilityChart />
-          </CardContent>
-        </Card>
-      </TabsContent>
-
-      <TabsContent value="feelsLike">
-        <Card>
-          <CardHeader>
-            <CardTitle>Feels like</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <FeelsLikeChart />
+            <Suspense
+              fallback={
+                <div className="space-y-2">
+                  <Skeleton className="h-6 w-32" />
+                  <Skeleton className="h-62.5 w-full" />
+                </div>
+              }
+            >
+              <ActiveChart />
+            </Suspense>
           </CardContent>
         </Card>
       </TabsContent>
