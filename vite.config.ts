@@ -26,14 +26,14 @@ export default defineConfig({
         // - Mapbox GL is large (~800 KB) and changes infrequently → own chunk
         // - Recharts + d3 deps → own chunk
         // - React + React-DOM → own chunk (cached separately from app code)
-        manualChunks: {
-          "vendor-react": ["react", "react-dom"],
-          "vendor-mapbox": ["mapbox-gl"],
-          "vendor-charts": ["recharts"],
-          "vendor-query": ["@tanstack/react-query"],
+        manualChunks(id) {
+          if (id.includes("react-dom") || id.includes("/react/"))
+            return "vendor-react";
+          if (id.includes("mapbox-gl")) return "vendor-mapbox";
+          if (id.includes("recharts")) return "vendor-charts";
+          if (id.includes("@tanstack/react-query")) return "vendor-query";
         },
       },
     },
   },
 });
-
