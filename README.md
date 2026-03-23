@@ -1,73 +1,88 @@
-# React + TypeScript + Vite
+# 🌤 Mausam — Real-Time Weather App
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A production-grade weather application built with React 19, TypeScript, Tailwind CSS v4, ShadCN UI, Recharts, and Mapbox GL.
 
-Currently, two official plugins are available:
+## ✨ Features
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+- **Real-time weather** via OpenWeatherMap `/data/2.5/weather` + `/data/2.5/forecast`
+- **Interactive map** via Mapbox GL with theme-aware light/dark styles
+- **9 hourly charts** (temperature, precipitation, wind, humidity, cloud cover, pressure, UV, visibility, feels like)
+- **Unit toggle** — metric (°C, m/s) ↔ imperial (°F, mph)
+- **Dark / light / system theme** with persistent preference
+- **Location search** with geocoding and keyboard shortcut (`⌘K` / `Ctrl+K`)
+- **Geolocation** — one-click current location button
+- **Fully responsive** — mobile, tablet, desktop
+- **Accessible** — ARIA labels, roles, skip-to-content, keyboard navigation, reduced-motion support
 
-## React Compiler
+## 🚀 Getting Started
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+### 1. Install dependencies
+```bash
+npm install
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+### 2. Set environment variables
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+Create a `.env.local` file at the project root:
+```env
+# OpenWeatherMap — Free tier works (uses /data/2.5 endpoints)
+# https://home.openweathermap.org/api_keys
+VITE_OPENWEATHER_API_KEY=your_openweathermap_key_here
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+# Mapbox — Free tier works (generous monthly limit)
+# https://account.mapbox.com/access-tokens/
+VITE_MAPBOX_TOKEN=your_mapbox_public_token_here
 ```
+
+### 3. Run dev server
+```bash
+npm run dev
+```
+
+### 4. Build for production
+```bash
+npm run build
+```
+
+## 🗂 Project Structure
+
+```
+src/
+├── api/               # Axios client (OpenWeatherMap)
+├── components/
+│   ├── charts/        # 9 chart components + WeatherAreaChart/WeatherBarChart generics
+│   ├── dialogs/       # SearchDialog
+│   ├── dropdowns/     # ThemeToggle, UnitToggle
+│   ├── layout/        # AppHeader, Footer, PageHeader, AppErrorBoundary
+│   ├── map/           # Map, Marker
+│   ├── providers/     # ThemeProvider
+│   ├── ui/            # ShadCN base components
+│   └── weather/       # CurrentWeatherCard, HourlyWeatherTabs
+├── config/            # App, weather API, Mapbox constants
+├── features/weather/  # useWeatherQuery (TanStack Query)
+├── hooks/             # useWeather, useGeocoding, usePageTitle
+├── lib/               # cn(), getUserLocation()
+├── store/             # Zustand stores (location, unit)
+└── types/             # TypeScript interfaces
+```
+
+## ⚠️ API Notes
+
+- **UV Index**: `/data/2.5/forecast` does not include `uvi` on the free tier. UV data requires One Call API 3.0. Chart shows 0 until upgraded.
+- **Dew point**: Not available in `/data/2.5/forecast`. Humidity chart shows relative humidity only.
+- **Forecast window**: 40 data points (5 days × 8 three-hour intervals).
+
+## 🛠 Tech Stack
+
+| Layer | Technology |
+|-------|------------|
+| Framework | React 19 |
+| Language | TypeScript 5.9 |
+| Styling | Tailwind CSS v4 |
+| Components | ShadCN UI (Radix primitives) |
+| Charts | Recharts |
+| Map | Mapbox GL JS v3 |
+| State | Zustand v5 |
+| Data fetching | TanStack Query v5 |
+| HTTP client | Axios |
+| Build | Vite 8 |

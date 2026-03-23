@@ -1,6 +1,8 @@
+import { memo } from "react";
 import { APP } from "@/config";
 import { useWeather } from "@/hooks/useWeather";
 import { useUnitStore } from "@/store/useUnitStore";
+import { formatUnixTime } from "@/lib/utils";
 
 import {
   Card,
@@ -18,107 +20,123 @@ export const CurrentWeatherCard = () => {
   const { weather, isLoading, error } = useWeather();
   const { unit } = useUnitStore();
 
-  // 🔥 Loading State (Better UX)
   if (isLoading) {
     return (
-      <Card className="min-h-65 space-y-4 p-4">
+      <Card className="min-h-64 space-y-4 p-4" aria-busy="true" aria-label="Loading current weather">
         <Skeleton className="h-5 w-32" />
         <Skeleton className="h-10 w-20" />
         <Skeleton className="h-20 w-full" />
+        <div className="grid grid-cols-3 gap-3">
+          {Array.from({ length: 5 }).map((_, i) => (
+            <Skeleton key={i} className="h-10 w-full" />
+          ))}
+        </div>
       </Card>
     );
   }
 
-  // ❌ Error State
   if (error || !weather) {
     return (
-      <Card className="text-muted-foreground flex min-h-65 items-center justify-center text-sm">
-        Failed to load weather data
+      <Card
+        role="alert"
+        className="text-muted-foreground flex min-h-64 items-center justify-center p-6 text-sm"
+      >
+        <p>Failed to load weather data. Please check your connection.</p>
       </Card>
     );
   }
 
   const current = weather.current;
 
-  const data = {
-    time: new Date(current.dt * 1000).toLocaleTimeString("en-US", {
-      timeStyle: "short",
-    }),
-    temp: Math.round(current.temp),
-    feelsLike: Math.round(current.feels_like),
-    windSpeed: Math.round(current.wind_speed),
-    visibility: Math.round(current.visibility / 1000),
-    dewPoint: Math.round(current.dew_point),
-  };
+  const temp = Math.round(current.main.temp);
+  const feelsLike = Math.round(current.main.feels_like);
+  const windSpeed = Math.round(current.wind.speed);
+  const windDeg = current.wind.deg;
+  const humidity = current.main.humidity;
+  const pressure = current.main.pressure;
+  const cloudCover = current.clouds.all;
+
+  const time = formatUnixTime(current.dt);
+  const weatherDesc = current.weather[0].description;
+
+  const visibilityDisplay =
+    unit === "metric"
+      ? `${Math.round(current.visibility / 1000)} km`
+      : `${Math.round(current.visibility / 1609)} mi`;
 
   return (
-    <Card className="h-full">
+    <Card className="h-full" aria-label="Current weather conditions">
       <CardHeader>
         <CardTitle>Current Weather</CardTitle>
-        <CardDescription>{data.time}</CardDescription>
+        <CardDescription>
+          <time dateTime={new Date(current.dt * 1000).toISOString()}>
+            {time}
+          </time>
+        </CardDescription>
       </CardHeader>
 
       <CardContent>
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:gap-6">
-          {/* Icon */}
+        <div className="flex flex-wrap items-center gap-4">
           <img
             src={`https://openweathermap.org/img/wn/${current.weather[0].icon}@4x.png`}
-            alt={`Weather: ${current.weather[0].description}`}
+            alt={`Weather condition: ${weatherDesc}`}
             className="h-16 w-16 object-contain"
+            width={64}
+            height={64}
+            loading="lazy"
+            decoding="async"
           />
 
-          {/* Temperature */}
-          <div className="flex items-start gap-1">
-            <span className="text-4xl font-semibold sm:text-6xl">
-              {data.temp}
+          <div className="flex items-start gap-1" aria-label={`Temperature: ${temp} ${APP.UNIT.TEMP[unit]}`}>
+            <span className="text-5xl font-semibold tabular-nums sm:text-6xl">
+              {temp}
             </span>
-            <span className="text-muted-foreground text-xl">
+            <span className="text-muted-foreground mt-2 text-xl" aria-hidden="true">
               {APP.UNIT.TEMP[unit]}
             </span>
           </div>
 
-          {/* Description */}
           <div>
-            <p className="font-medium capitalize">
-              {current.weather[0].description}
-            </p>
+            <p className="font-medium capitalize">{weatherDesc}</p>
             <p className="text-muted-foreground text-sm">
-              Feels like {data.feelsLike}°
+              Feels like {feelsLike}{APP.UNIT.TEMP[unit]}
             </p>
           </div>
         </div>
       </CardContent>
 
-      <CardFooter className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
+      <CardFooter className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-5">
         <Metric label="Wind">
-          <div className="flex items-center gap-1">
-            {data.windSpeed} {APP.UNIT.WIND[unit]}
+          <span className="flex items-center gap-1">
+            <span>{windSpeed} {APP.UNIT.WIND[unit]}</span>
             <Navigation2Icon
+              aria-label={`Wind direction: ${windDeg}°`}
               size={14}
-              style={{ rotate: `${current.wind_deg}deg` }}
+              style={{ rotate: `${windDeg}deg` }}
             />
-          </div>
+          </span>
         </Metric>
-
-        <Metric label="Humidity">{current.humidity}%</Metric>
-        <Metric label="Visibility">{data.visibility} km</Metric>
-        <Metric label="Pressure">{current.pressure} hPa</Metric>
-        <Metric label="Dew Point">{data.dewPoint}°</Metric>
+        <Metric label="Humidity">{humidity}%</Metric>
+        <Metric label="Visibility">{visibilityDisplay}</Metric>
+        <Metric label="Pressure">{pressure} hPa</Metric>
+        <Metric label="Cloud Cover">{cloudCover}%</Metric>
       </CardFooter>
     </Card>
   );
 };
 
-// 🔥 Reusable Metric Component
-const Metric = ({
-  label,
-  children,
-}: {
+// ─── Metric sub-component — memoized to avoid re-renders ─────────────────────
+interface MetricProps {
   label: string;
   children: React.ReactNode;
-}) => (
-  <div>
-    <p className="text-muted-foreground text-xs">{label}</p>
-    <p className="text-sm font-medium">{children}</p>
-  </div>
-);
+}
+
+const Metric = memo(function Metric({ label, children }: MetricProps) {
+  return (
+    <div>
+      <p className="text-muted-foreground text-xs">{label}</p>
+      {/* div, not p — Wind passes a <span> with a nested icon */}
+      <div className="text-sm font-medium">{children}</div>
+    </div>
+  );
+});

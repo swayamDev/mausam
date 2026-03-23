@@ -1,6 +1,6 @@
 // src/types/weather/weather-conditions.ts
 
-import type { WeatherConditionCode, WeatherConditionIcon } from "@/types";
+import type { WeatherConditionCode, WeatherConditionIcon } from "./weather-codes";
 
 export type WeatherConditionMain =
   | "Thunderstorm"

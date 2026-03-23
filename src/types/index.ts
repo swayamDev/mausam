@@ -6,3 +6,4 @@ export * from "./weather/weather-conditions";
 export * from "./weather/weather-codes";
 export * from "./common/geo";
 export * from "./common/timezone";
+export * from "./weather/weather-query";

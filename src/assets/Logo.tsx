@@ -1,16 +1,12 @@
-import React from "react";
-
 interface LogoProps {
   className?: string;
   variant?: "light" | "dark";
 }
 
-const Logo: React.FC<LogoProps> = ({
+const Logo = ({
   className = "w-48 h-auto",
   variant = "light",
-}) => {
-  // Define base colors based on variant
-  // Light: Pure Black (#000000), Dark: Pure White (#FFFFFF)
+}: LogoProps) => {
   const baseColor = variant === "light" ? "#000000" : "#FFFFFF";
 
   return (
@@ -53,7 +49,7 @@ const Logo: React.FC<LogoProps> = ({
         y="41"
         fill={baseColor}
         style={{
-          fontFamily: "Inter, system-ui, sans-serif",
+          fontFamily: "'Geist Variable', system-ui, sans-serif",
           fontWeight: 600,
           fontSize: "26px",
           letterSpacing: "-0.03em",

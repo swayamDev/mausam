@@ -6,7 +6,7 @@ import type {
   HourlyForecast,
   DailyForecast,
   Alert,
-} from "@/types";
+} from "./weather-forecast";
 
 export interface OneCallWeatherRes {
   lat: number;

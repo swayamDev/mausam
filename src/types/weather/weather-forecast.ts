@@ -1,23 +1,34 @@
 // src/types/weather/weather-forecast.ts
 
-import type { WeatherCondition } from "@/types";
+import type { WeatherCondition } from "./weather-conditions";
 
+/**
+ * Shape of /data/2.5/weather (current weather endpoint)
+ */
 export interface CurrentWeather {
   dt: number;
-  sunrise: number;
-  sunset: number;
-  temp: number;
-  feels_like: number;
-  pressure: number;
-  humidity: number;
-  dew_point: number;
-  uvi: number;
-  clouds: number;
+  sys: {
+    sunrise: number;
+    sunset: number;
+    country: string;
+  };
+  main: {
+    temp: number;
+    feels_like: number;
+    temp_min: number;
+    temp_max: number;
+    pressure: number;
+    humidity: number;
+  };
+  wind: {
+    speed: number;
+    deg: number;
+    gust?: number;
+  };
+  clouds: { all: number };
   visibility: number;
-  wind_speed: number;
-  wind_deg: number;
-  wind_gust: number;
   weather: [WeatherCondition];
+  name: string;
 }
 
 export interface MinutelyForecast {
@@ -25,13 +36,34 @@ export interface MinutelyForecast {
   precipitation: number;
 }
 
-export interface HourlyForecast extends Omit<
-  CurrentWeather,
-  "sunrise" | "sunset"
-> {
+/**
+ * Shape of a single item from /data/2.5/forecast (5-day / 3-hour)
+ * NOTE: This is NOT the One Call API — weather data lives under `main`,
+ * wind under `wind`, clouds under `clouds`, etc.
+ */
+export interface HourlyForecast {
+  dt: number;
+  main: {
+    temp: number;
+    feels_like: number;
+    temp_min: number;
+    temp_max: number;
+    pressure: number;
+    humidity: number;
+  };
+  weather: [WeatherCondition];
+  clouds: { all: number };
+  wind: {
+    speed: number;
+    deg: number;
+    gust?: number;
+  };
+  visibility: number;
   pop: number;
-  rain?: { "1h": number };
-  snow?: { "1h": number };
+  rain?: { "3h": number };
+  snow?: { "3h": number };
+  sys: { pod: string };
+  dt_txt: string;
 }
 
 export interface DailyForecast {
@@ -73,3 +105,5 @@ export interface Alert {
   description: string;
   tags: string[];
 }
+
+

@@ -22,7 +22,7 @@ export const useUnitStore = create<UnitState>()(
         }),
     }),
     {
-      name: "weather-unit", // localStorage key
+      name: "mausam-unit",
     },
   ),
 );

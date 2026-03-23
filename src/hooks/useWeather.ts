@@ -1,8 +1,10 @@
 import { useWeatherStore } from "@/store/useWeatherStore";
+import { useUnitStore } from "@/store/useUnitStore";
 import { useWeatherQuery } from "@/features/weather/useWeatherQuery";
 
 export const useWeather = () => {
-  const { lat, lon, unit } = useWeatherStore();
+  const { lat, lon, setLocation } = useWeatherStore();
+  const { unit } = useUnitStore();
 
   const query = useWeatherQuery(lat, lon, unit);
 
@@ -10,5 +12,6 @@ export const useWeather = () => {
     weather: query.data,
     isLoading: query.isLoading,
     error: query.error,
+    setLocation,
   };
 };

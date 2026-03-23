@@ -1,7 +1,7 @@
 import mapboxgl from "mapbox-gl";
 import { MAPBOX } from "@/config";
 
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useTheme } from "@/components/providers/theme-provider";
 import { useWeather } from "@/hooks/useWeather";
 
@@ -10,12 +10,32 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 import type { LngLatLike, Map as MapType } from "mapbox-gl";
 
+const MAP_STYLES = {
+  light: "mapbox://styles/mapbox/light-v11",
+  dark: "mapbox://styles/mapbox/dark-v11",
+} as const;
+
+type ResolvedTheme = keyof typeof MAP_STYLES;
+
+function resolveTheme(theme: string): ResolvedTheme {
+  if (theme === "system") {
+    return window.matchMedia("(prefers-color-scheme: dark)").matches
+      ? "dark"
+      : "light";
+  }
+  return (theme as ResolvedTheme) ?? "dark";
+}
+
 export const Map = () => {
   const { theme } = useTheme();
   const { weather } = useWeather();
+  const [mapReady, setMapReady] = useState(false);
 
   const mapRef = useRef<MapType | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
+
+  // Stable resolved theme — only recomputes when `theme` token changes
+  const resolvedTheme = useMemo(() => resolveTheme(theme), [theme]);
 
   const center = useMemo<LngLatLike>(
     () =>
@@ -25,7 +45,7 @@ export const Map = () => {
     [weather],
   );
 
-  // ✅ Initialize map ONCE
+  // Initialize map once
   useEffect(() => {
     if (!containerRef.current || mapRef.current) return;
 
@@ -35,45 +55,59 @@ export const Map = () => {
       container: containerRef.current,
       center,
       zoom: MAPBOX.DEFAULTS.ZOOM,
-      style:
-        theme === "light"
-          ? "mapbox://styles/mapbox/light-v11"
-          : "mapbox://styles/mapbox/dark-v11",
+      style: MAP_STYLES[resolvedTheme],
+      attributionControl: false,
     });
+
+    mapRef.current.addControl(
+      new mapboxgl.AttributionControl({ compact: true }),
+      "bottom-left",
+    );
+
+    mapRef.current.on("load", () => setMapReady(true));
 
     return () => {
       mapRef.current?.remove();
       mapRef.current = null;
+      setMapReady(false);
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // ✅ Update center WITHOUT re-creating map
+  // Fly to new location without rebuilding the map
   useEffect(() => {
-    if (!mapRef.current) return;
+    if (!mapRef.current || !mapReady) return;
     mapRef.current.flyTo({ center, essential: true });
-  }, [center]);
+  }, [center, mapReady]);
 
-  // ✅ Update theme WITHOUT re-creating map
+  // Swap style on theme change without rebuilding the map
   useEffect(() => {
-    if (!mapRef.current) return;
-
-    mapRef.current.setStyle(
-      theme === "light"
-        ? "mapbox://styles/mapbox/light-v11"
-        : "mapbox://styles/mapbox/dark-v11",
-    );
-  }, [theme]);
+    if (!mapRef.current || !mapReady) return;
+    mapRef.current.setStyle(MAP_STYLES[resolvedTheme]);
+  }, [resolvedTheme, mapReady]);
 
   return (
-    <div className="bg-card relative h-75 overflow-hidden rounded-xl border shadow-sm sm:h-100 lg:h-full">
-      {/* Loading Skeleton */}
-      {!mapRef.current && <Skeleton className="absolute inset-0 z-10" />}
+    <div
+      role="region"
+      aria-label="Location map"
+      className="bg-card relative h-64 overflow-hidden rounded-xl border shadow-sm sm:h-80 lg:h-full lg:min-h-72"
+    >
+      {/* Loading skeleton */}
+      {!mapReady && (
+        <Skeleton className="absolute inset-0 z-10" aria-hidden="true" />
+      )}
 
-      {/* Map Container */}
-      <div ref={containerRef} className="h-full w-full" />
+      {/* Mapbox container */}
+      <div
+        ref={containerRef}
+        className="h-full w-full"
+        aria-hidden="true"
+      />
 
-      {/* Marker */}
-      {mapRef.current && <Marker map={mapRef.current} coordinates={center} />}
+      {/* Temperature marker */}
+      {mapReady && mapRef.current && (
+        <Marker map={mapRef.current} coordinates={center} />
+      )}
     </div>
   );
 };
